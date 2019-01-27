@@ -33,18 +33,22 @@ colnames(raw_combined) <- raw_features[[2]]
 raw_labels <- read.csv("./UCI HAR Dataset/activity_labels.txt", header=FALSE, sep="")
 #merge the names of the activites to the people in labels
 activities <- merge(labels_combined,raw_labels, by="V1", all.x=TRUE)
+names(activities) <- c("activityId","activityDescription")
 
 
 #subset only the features that are means or standard deviations
-mean_and_std <- raw_combined[grep("mean|std", colnames(raw_combined))]
+mean_and_std <- raw_combined[grep("mean\\(\\)|std\\(\\)", colnames(raw_combined))]
 
 #clean up more memory
 remove(raw_combined)
 remove(labels_combined)
 
-
 #join the test data to the labels data 
 clean_data <- merge(mean_and_std,activities[2], by="row.names")
 clean_data <- select(clean_data, -"Row.names")
 
+#create a dataset with the average of each variable for each person and activity
+averages <- clean_data %>% group_by(activityDescription) %>% summarise_all(mean)
+
 write.table(clean_data, "./tidydataoutput.txt", row.name=FALSE)
+write.table(averages, "./tidyaverages.txt", row.name=FALSE)
